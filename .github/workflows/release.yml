@@ -1,0 +1,26 @@
+name: Release
+
+# Push a tag like v0.1.0 to build Telltale and attach the zip to a GitHub release.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build universal app
+        run: ./build.sh --zip
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" build/Telltale-*.zip \
+            --title "Telltale $GITHUB_REF_NAME" \
+            --generate-notes

@@ -1,0 +1,25 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build universal app
+        run: ./build.sh --zip
+
+      - name: Smoke test (prints one set of readings)
+        # CI runners are VMs without batteries, fans or sensors, so missing values are expected.
+        continue-on-error: true
+        run: build/Telltale.app/Contents/MacOS/Telltale --selftest
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Telltale
+          path: build/Telltale-*.zip
