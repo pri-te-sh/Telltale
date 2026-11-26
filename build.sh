@@ -25,7 +25,7 @@ rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 compile() { # $1 = arch, $2 = output
-  swiftc -O -swift-version 5 -target "$1-apple-macos$MIN_MACOS" Sources/*.swift -o "$2"
+  swiftc -O -swift-version 5 -target "$1-apple-macos$MIN_MACOS" Sources/*.swift -lIOReport -o "$2"
 }
 
 if [ "$UNIVERSAL" = 1 ]; then

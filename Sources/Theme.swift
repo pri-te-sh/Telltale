@@ -31,6 +31,8 @@ struct Theme {
     let upload: [Color]
     let heat: [Color]
     let devices: [Color]
+    var gpu: [Color] { [Color(hex: 0x43E97B), Color(hex: 0x38F9D7)] }
+    var power: [Color] { [Color(hex: 0xFFE259), Color(hex: 0xFFA751)] }
     let brand: [Color]
 
     var isSystem: Bool { name == .system }

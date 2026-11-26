@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Telltale — a featherweight system monitor for your Mac's menu bar</title>
-<meta name="description" content="CPU, memory, disk, battery, network, Bluetooth devices, temperatures and fans in one beautiful menu-bar panel that idles at ~14 MB and ~0% CPU. Free and open source.">
+<meta name="description" content="CPU, GPU, memory, disk, power, battery, network, Bluetooth devices, temperatures and fans in one beautiful menu-bar panel that idles at ~13 MB and ~0% CPU. Free and open source.">
 <meta property="og:title" content="Telltale — system monitor for your Mac's menu bar">
-<meta property="og:description" content="Beautiful, featherweight, open source. Idles at ~14 MB and ~0% CPU.">
+<meta property="og:description" content="Beautiful, featherweight, open source. Idles at ~13 MB and ~0% CPU.">
 <meta property="og:image" content="https://pri-te-sh.github.io/Telltale/assets/overview-aurora.png">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
@@ -235,6 +235,7 @@
     <a class="brand" href="#"><img src="assets/icon.png" alt="">Telltale</a>
     <div class="nav-links">
       <a href="#features">Features</a>
+      <a href="#menubar">Menu bar</a>
       <a href="#themes">Themes</a>
       <a href="#light">Why it's light</a>
       <a href="#install">Install</a>
@@ -250,8 +251,8 @@
     <div>
       <span class="eyebrow">Free &amp; open source · macOS 14+</span>
       <h1>Your Mac's vital signs,<br><span class="grad">one click away.</span></h1>
-      <p class="lede">Telltale is a beautiful, featherweight menu-bar monitor for CPU, memory, disk, battery,
-        network, Bluetooth devices, temperatures and fans — that idles at about <b>14&nbsp;MB</b> and <b>0%&nbsp;CPU</b>.</p>
+      <p class="lede">Telltale is a beautiful, featherweight menu-bar monitor for CPU, GPU, memory, disk, power,
+        battery, network, Bluetooth devices, temperatures and fans — that idles at about <b>13&nbsp;MB</b> and <b>0%&nbsp;CPU</b>.</p>
       <div class="cta">
         <a class="btn primary" href="https://github.com/pri-te-sh/Telltale/releases/latest">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
@@ -269,10 +270,10 @@
 
   <!-- Stats -->
   <div class="stats">
-    <div class="stat"><b>~14 MB</b><span>memory while idle in the menu bar</span></div>
-    <div class="stat"><b>~0%</b><span>CPU while idle — counters read every 3 s</span></div>
+    <div class="stat"><b>~13 MB</b><span>memory with just the menu bar icon</span></div>
+    <div class="stat"><b>~0%</b><span>CPU while idle — you only pay for what you show</span></div>
     <div class="stat"><b>0</b><span>dependencies, helpers or background daemons</span></div>
-    <div class="stat"><b>27</b><span>temperature sensors read on an M1 Pro</span></div>
+    <div class="stat"><b>8</b><span>live menu-bar readouts with mini charts</span></div>
   </div>
 
   <!-- Features -->
@@ -283,11 +284,15 @@
     </div>
     <div class="features">
       <div class="feature"><div class="badge g-cpu"><svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/></svg></div>
-        <h3>CPU</h3><p>Live load and 3-minute history, user/system split, load average, and the apps using the most CPU — helpers grouped under their app.</p></div>
+        <h3>CPU</h3><p>Live load and history, per-core load split into performance and efficiency cores, and the apps using the most CPU.</p></div>
+      <div class="feature"><div class="badge" style="background:linear-gradient(135deg,#43e97b,#38f9d7)"><svg viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg></div>
+        <h3>GPU</h3><p>Utilization, renderer and tiler load, GPU memory in use and GPU power in watts.</p></div>
+      <div class="feature"><div class="badge" style="background:linear-gradient(135deg,#ffe259,#ffa751)"><svg viewBox="0 0 24 24"><path d="m13 2-9 12h8l-1 8 9-12h-8Z"/></svg></div>
+        <h3>Power &amp; energy</h3><p>Whole-Mac power draw, charger input, battery watts, voltage and current — and the apps using the most energy.</p></div>
       <div class="feature"><div class="badge g-mem"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M7 7v10M11 7v10M15 7v10M6 21v-4M18 21v-4"/></svg></div>
         <h3>Memory</h3><p>App, wired, compressed and cached memory, real memory pressure and swap — plus the top memory users with a one-click Quit.</p></div>
       <div class="feature"><div class="badge g-disk"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div>
-        <h3>Storage</h3><p>Available space as Finder counts it, what macOS can purge, and external drives with free space and eject.</p></div>
+        <h3>Storage</h3><p>Available space as Finder counts it, live read/write speed, the apps hitting the disk hardest, and external drives with eject.</p></div>
       <div class="feature"><div class="badge g-bat"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2M11 9l-2 3h4l-2 3"/></svg></div>
         <h3>Battery</h3><p>Charge and time left, cycle count, health versus design capacity, battery temperature and charger wattage.</p></div>
       <div class="feature"><div class="badge g-heat"><svg viewBox="0 0 24 24"><path d="M14 14.8V5a2 2 0 1 0-4 0v9.8a4 4 0 1 0 4 0Z"/></svg></div>
@@ -299,8 +304,17 @@
       <div class="feature"><div class="badge g-brand"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/><path d="M12 12l5-5"/><circle cx="12" cy="12" r="1.5"/></svg></div>
         <h3>Health at a glance</h3><p>A status pill that turns amber or red for <i>Running hot</i>, <i>Memory tight</i>, <i>Battery low</i> or <i>Disk nearly full</i>.</p></div>
       <div class="feature"><div class="badge g-gray"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="5" rx="1.5"/><path d="M15 6.5h4"/></svg></div>
-        <h3>Your menu bar, your way</h3><p>Show just an icon, or live CPU %, memory %, CPU temperature — in any combination.</p></div>
+        <h3>Alerts</h3><p>Get notified when the CPU runs hot, memory gets tight, or disk space or battery runs low — each with its own threshold.</p></div>
     </div>
+  </section>
+
+  <!-- Menu bar -->
+  <section id="menubar">
+    <div class="section-head">
+      <h2>Your menu bar, your way</h2>
+      <p>Pick any of eight live readouts — CPU, GPU, memory, disk, network, temperature, power, battery — with optional mini charts. Or keep just the icon.</p>
+    </div>
+    <img src="assets/menubar.png" alt="Telltale menu bar readouts with mini charts" style="margin:0 auto;max-width:min(860px,100%);border-radius:10px;background:#000;padding:6px 10px">
   </section>
 
   <!-- Themes -->
@@ -330,7 +344,9 @@
       <figure><img src="assets/memory.png" alt="Memory page" loading="lazy"><figcaption>Memory</figcaption></figure>
       <figure><img src="assets/thermals.png" alt="Thermals and fans page" loading="lazy"><figcaption>Thermals &amp; fans</figcaption></figure>
       <figure><img src="assets/network.png" alt="Network page" loading="lazy"><figcaption>Network</figcaption></figure>
-      <figure><img src="assets/cpu.png" alt="CPU page" loading="lazy"><figcaption>CPU</figcaption></figure>
+      <figure><img src="assets/cpu.png" alt="CPU page with per-core load" loading="lazy"><figcaption>CPU &amp; cores</figcaption></figure>
+      <figure><img src="assets/power.png" alt="Power and energy page" loading="lazy"><figcaption>Power &amp; energy</figcaption></figure>
+      <figure><img src="assets/gpu.png" alt="GPU page" loading="lazy"><figcaption>GPU</figcaption></figure>
       <figure><img src="assets/battery.png" alt="Battery page" loading="lazy"><figcaption>Battery</figcaption></figure>
       <figure><img src="assets/settings.png" alt="Settings page" loading="lazy"><figcaption>Settings</figcaption></figure>
     </div>
@@ -353,15 +369,15 @@
         <p>Mach host statistics, libproc, IOKit, SMC and CoreWLAN — no kernel extensions, no root helper, no scraping other tools.</p></div>
     </div>
     <table class="compare">
-      <thead><tr><th></th><th>Telltale</th><th>Typical all-in-one monitor</th></tr></thead>
+      <thead><tr><th>Measured side by side</th><th>Telltale</th><th>Stats 3.1.1 (defaults)</th></tr></thead>
       <tbody>
-        <tr><td>Memory while idle</td><td>~14 MB</td><td>50–300 MB</td></tr>
-        <tr><td>CPU while idle</td><td>~0%</td><td>1–4%</td></tr>
-        <tr><td>Background helpers</td><td>None</td><td>Often 1–3</td></tr>
-        <tr><td>Network access</td><td>Only the speed test you start</td><td>Updates, analytics</td></tr>
-        <tr><td>Download size</td><td>~2 MB</td><td>20–100 MB</td></tr>
+        <tr><td>Panel closed · icon only</td><td>13 MB · 0.03% CPU</td><td>73 MB · 4.9% CPU</td></tr>
+        <tr><td>Panel closed · 6 readouts + charts · every 3 s</td><td>19 MB · 0.7% CPU</td><td>73 MB · 5.0% CPU</td></tr>
+        <tr><td>Panel closed · 6 readouts + charts · every 1 s</td><td>19 MB · 2.4% CPU</td><td>73 MB · 5.0% CPU</td></tr>
+        <tr><td>Panel open · overview</td><td>54 MB · 3.6% CPU</td><td>73 MB · 5.3% CPU</td></tr>
       </tbody>
     </table>
+    <p class="note" style="text-align:center">M1 Pro, 60 s per configuration, CPU as % of one core. Measure on your own Mac with <code>./scripts/measure.sh --compare Stats</code>.</p>
   </section>
 
   <!-- Install -->
@@ -399,6 +415,7 @@ cd Telltale
     <div class="faq">
       <details><summary>Is Telltale really free?</summary><p>Yes. It's MIT-licensed open source with no paid tier, no account and no tracking.</p></details>
       <details><summary>What data does it collect?</summary><p>None. Telltale has no analytics, crash reporting or update checks. The only network traffic it ever creates is Apple's <code>networkQuality</code> speed test, and only when you press Run test.</p></details>
+      <details><summary>Why only GPU and whole-Mac power, not CPU watts?</summary><p>On current macOS versions the CPU and Neural Engine energy counters read zero for apps without root. Telltale shows whole-Mac power from the battery controller, GPU power from Apple's energy counters, and per-app power from the kernel.</p></details>
       <details><summary>Can it control my fans?</summary><p>Not yet. Reading fan speeds is safe and needs no special rights; setting them requires a privileged helper and can overheat a Mac if done wrong. It may arrive later as an opt-in feature.</p></details>
       <details><summary>Why does it want Location access?</summary><p>Only if you click “Show name” on the Network page. Since macOS Sonoma, apps can't see your Wi-Fi network's name without Location permission. Telltale never reads your location.</p></details>
       <details><summary>Why isn't my iPhone's battery shown?</summary><p>macOS doesn't share iPhone battery levels with third-party apps. Bluetooth accessories like Magic Mouse, keyboards, trackpads and AirPods are supported.</p></details>
@@ -411,7 +428,7 @@ cd Telltale
   <section>
     <div class="band">
       <h2>Keep an eye on your Mac — without it keeping an eye on your battery.</h2>
-      <p>Free, open source, and about 14 MB.</p>
+      <p>Free, open source, and about 13 MB.</p>
       <div class="cta">
         <a class="btn primary" href="https://github.com/pri-te-sh/Telltale/releases/latest">Download Telltale</a>
         <a class="btn" href="https://github.com/pri-te-sh/Telltale">Star on GitHub</a>
