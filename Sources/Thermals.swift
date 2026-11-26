@@ -60,7 +60,7 @@ struct ThermalsDetail: View {
 
         Card {
             Toggle("Notify me when the CPU gets hot", isOn: Binding(get: { alertsOn }, set: { on in
-                m.setHeatAlerts(on) { granted in
+                m.setAlert(.heat, on: on) { granted in
                     alertsOn = on && granted
                     note = on && !granted ? "Notifications are blocked. Allow Telltale in System Settings → Notifications." : nil
                 }

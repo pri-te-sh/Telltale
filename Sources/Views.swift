@@ -2,7 +2,7 @@ import SwiftUI
 import AppKit
 import ServiceManagement
 
-enum Panel: String, Hashable { case storage, memory, cpu, battery, network, devices, thermals, settings }
+enum Panel: String, Hashable { case storage, memory, cpu, gpu, power, battery, network, devices, thermals, settings }
 
 extension Notification.Name { static let telltaleThemeChanged = Notification.Name("TelltaleThemeChanged") }
 
@@ -19,8 +19,12 @@ extension Fmt {
 struct RootView: View {
     @AppStorage("theme") private var themeName = ThemeName.aurora.rawValue
     @State private var panel: Panel?
+    private let onSize: (CGSize) -> Void
 
-    init(initial: Panel? = nil) { _panel = State(initialValue: initial) }
+    init(initial: Panel? = nil, onSize: @escaping (CGSize) -> Void = { _ in }) {
+        _panel = State(initialValue: initial)
+        self.onSize = onSize
+    }
 
     var body: some View {
         let theme = Theme.make(ThemeName(rawValue: themeName) ?? .aurora)
@@ -39,6 +43,13 @@ struct RootView: View {
         .frame(width: 392)
         .background(ThemeBackground(theme: theme).padding(-30))
         .environment(\.theme, theme)
+        .fixedSize(horizontal: false, vertical: true)
+        .onGeometryChange(for: CGSize.self) { proxy in
+            // Round so sub-point jitter from live numbers never triggers a resize.
+            CGSize(width: proxy.size.width.rounded(), height: proxy.size.height.rounded())
+        } action: { onSize($0) }
+        .onAppear { Monitor.shared.visiblePanel = panel }
+        .onChange(of: panel) { Monitor.shared.visiblePanel = panel }
     }
 
     private func go(_ p: Panel?) {
@@ -63,6 +74,11 @@ struct OverviewView: View {
                 thermalsCard.frame(width: halfWidth)
             }
             .frame(height: 132)
+            HStack(spacing: 10) {
+                powerCard.frame(width: halfWidth)
+                diskActivityCard.frame(width: halfWidth)
+            }
+            .frame(height: 112)
             HStack(spacing: 10) {
                 busiestCard.frame(width: halfWidth)
                 devicesCard.frame(width: halfWidth)
@@ -89,8 +105,10 @@ struct OverviewView: View {
         HStack(spacing: 0) {
             GaugeCell(title: "CPU", value: Fmt.pct(m.cpuTotal), fraction: m.cpuTotal / 100,
                       sub: Fmt.temp(m.temps.cpu), colors: theme.cpu, rolling: false) { open(.cpu) }
+            GaugeCell(title: "GPU", value: Fmt.pct(m.gpu?.utilization ?? 0), fraction: (m.gpu?.utilization ?? 0) / 100,
+                      sub: m.gpuPowerW.map { Fmt.watts($0) } ?? "—", colors: theme.gpu, rolling: false) { open(.gpu) }
             GaugeCell(title: "Memory", value: Fmt.pct(m.mem.usedPercent), fraction: m.mem.usedPercent / 100,
-                      sub: "\(Fmt.mem(m.mem.available)) free", colors: theme.memory) { open(.memory) }
+                      sub: "\(Fmt.short(m.mem.available)) free", colors: theme.memory) { open(.memory) }
             GaugeCell(title: "Disk", value: Fmt.pct((m.disk?.usedFraction ?? 0) * 100), fraction: m.disk?.usedFraction ?? 0,
                       sub: m.disk.map { "\(Fmt.short($0.available)) free" } ?? "—", colors: theme.disk) { open(.storage) }
             GaugeCell(title: "Battery", value: m.battery.map { "\($0.percent)%" } ?? "—",
@@ -100,7 +118,7 @@ struct OverviewView: View {
             }
         }
         .padding(.vertical, 10)
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 2)
         .glass()
     }
 
@@ -109,6 +127,40 @@ struct OverviewView: View {
         if b.isCharging { return "Charging" }
         if b.onAC { return b.percent >= 99 ? "Charged" : "Plugged in" }
         return b.minutesRemaining.map { Fmt.minutes($0) + " left" } ?? "On battery"
+    }
+
+    private var powerCard: some View {
+        TapCard(action: { open(.power) }) {
+            CardHeader(symbol: "bolt.fill", title: "Power", colors: theme.power)
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
+                RollingText(text: m.power?.systemW.map { Fmt.watts($0) } ?? "—", size: 20, weight: .heavy)
+                Text(powerSource).font(.system(size: 10, weight: .semibold)).foregroundStyle(.secondary).lineLimit(1)
+            }
+            Sparkline(values: m.powerHistory, maxValue: max(20, (m.powerHistory.max() ?? 0) * 1.15), colors: theme.power)
+                .frame(maxHeight: .infinity)
+        }
+    }
+
+    private var powerSource: String {
+        guard let b = m.battery else { return "whole Mac" }
+        if !b.onAC { return m.power?.batteryW.map { "battery \(Fmt.watts(abs($0)))" } ?? "on battery" }
+        return "from charger"
+    }
+
+    private var diskActivityCard: some View {
+        TapCard(action: { open(.storage) }) {
+            CardHeader(symbol: "internaldrive.fill", title: "Disk activity", colors: theme.disk)
+            HStack(spacing: 12) {
+                RateLabel(arrow: "arrow.down.doc", label: "Read", value: Fmt.rate(m.diskRead), color: theme.disk.first ?? .purple)
+                RateLabel(arrow: "square.and.pencil", label: "Write", value: Fmt.rate(m.diskWrite), color: theme.disk.last ?? .pink)
+            }
+            let top = max(m.diskReadHistory.max() ?? 0, m.diskWriteHistory.max() ?? 0, 100_000) * 1.15
+            ZStack {
+                Sparkline(values: m.diskReadHistory, maxValue: top, colors: theme.disk)
+                Sparkline(values: m.diskWriteHistory, maxValue: top, colors: theme.upload, showDot: false).opacity(0.85)
+            }
+            .frame(maxHeight: .infinity)
+        }
     }
 
     private var networkCard: some View {
@@ -245,14 +297,14 @@ struct GaugeCell: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 5) {
-                GaugeRing(fraction: fraction, colors: colors, lineWidth: 7) {
-                    RollingText(text: value, size: 14.5, weight: .heavy, shrink: 0.6, rolling: rolling)
+                GaugeRing(fraction: fraction, colors: colors, lineWidth: 6) {
+                    RollingText(text: value, size: 13, weight: .heavy, shrink: 0.6, rolling: rolling)
                 }
-                .frame(width: 68, height: 68)
+                .frame(width: 58, height: 58)
                 .scaleEffect(hover ? 1.06 : 1)
                 .animation(.spring(response: 0.3, dampingFraction: 0.65), value: hover)
                 Text(title).font(.system(size: 11, weight: .semibold))
-                Text(sub).font(.system(size: 9.5)).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+                Text(sub).font(.system(size: 9)).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.75)
                     .monospacedDigit()
             }
             .frame(maxWidth: .infinity)
@@ -377,6 +429,8 @@ struct DetailView: View {
             case .storage: StorageDetail()
             case .memory: MemoryDetail()
             case .cpu: CPUDetail()
+            case .gpu: GPUDetail()
+            case .power: PowerDetail()
             case .battery: BatteryDetail()
             case .network: NetworkDetail()
             case .devices: DevicesDetail()
@@ -391,6 +445,8 @@ struct DetailView: View {
         case .storage: return ("Storage", "internaldrive.fill", theme.disk)
         case .memory: return ("Memory", "memorychip.fill", theme.memory)
         case .cpu: return ("CPU", "cpu.fill", theme.cpu)
+        case .gpu: return ("GPU", "cube.transparent.fill", theme.gpu)
+        case .power: return ("Power & Energy", "bolt.fill", theme.power)
         case .battery: return ("Battery", "battery.100percent.bolt", theme.battery)
         case .network: return ("Network", "wifi", theme.network)
         case .devices: return ("Devices", "dot.radiowaves.left.and.right", theme.devices)
@@ -425,6 +481,7 @@ struct StorageDetail: View {
                 }
             }
         }
+        DiskActivityCard()
         DrivesCard()
         PillButton(title: "Storage Settings", symbol: "gearshape") {
             if let u = URL(string: "x-apple.systempreferences:com.apple.settings.Storage") { NSWorkspace.shared.open(u) }
@@ -529,6 +586,7 @@ struct CPUDetail: View {
                 Stat(label: "Uptime", value: Fmt.duration(m.uptime))
             }
         }
+        CoreGrid()
         ProcessList(title: "Top CPU users (% of one core)", items: m.topCPU, empty: "Nothing busy right now",
                     colors: theme.cpu, amount: { $0.cpu }, value: { String(format: "%.1f%%", $0.cpu) })
     }
@@ -730,13 +788,19 @@ struct DevicesDetail: View {
 struct SettingsDetail: View {
     @EnvironmentObject var m: Monitor
     @Environment(\.theme) private var theme
-    @AppStorage("menuBarMode") private var mode = 0
     @AppStorage("tempUnit") private var unit = Fmt.defaultUnit
     @AppStorage("theme") private var themeName = ThemeName.aurora.rawValue
     @State private var loginOn = SMAppService.mainApp.status == .enabled
     @State private var loginNote: String?
 
     var body: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 10) { content }
+        }
+        .frame(height: 560)
+    }
+
+    @ViewBuilder private var content: some View {
         Card {
             SectionTitle(text: "Theme")
             HStack(spacing: 0) {
@@ -756,15 +820,6 @@ struct SettingsDetail: View {
                 Text(n).font(.system(size: 10.5)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Divider().opacity(0.4)
-            Picker("Menu bar shows", selection: $mode) {
-                Text("Icon only").tag(0)
-                Text("CPU load").tag(1)
-                Text("CPU load + memory").tag(2)
-                Text("CPU temperature").tag(3)
-                Text("CPU load + temperature").tag(4)
-            }
-            .pickerStyle(.menu).font(.system(size: 12))
-            .onChange(of: mode) { m.refreshTempsNow() }
             Picker("Temperature unit", selection: $unit) {
                 Text("°F").tag("F")
                 Text("°C").tag("C")
@@ -772,6 +827,8 @@ struct SettingsDetail: View {
             .pickerStyle(.segmented).font(.system(size: 12)).frame(maxWidth: 240)
             .onChange(of: unit) { m.refreshTempsNow() }
         }
+        MenuBarSettings()
+        AlertSettings()
         Card {
             HStack(spacing: 8) {
                 IconBadge(symbol: "leaf.fill", colors: theme.battery, size: 22)

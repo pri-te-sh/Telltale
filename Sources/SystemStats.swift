@@ -314,6 +314,8 @@ private func IOHIDEventGetFloatValue(_ event: AnyObject, _ field: Int32) -> Doub
 final class Sensors {
     private let kTemperatureEvent: Int64 = 15
     private var services: [(name: String, service: AnyObject)] = []
+    private var cpuServices: [AnyObject] = []   // one CPU-die sensor per name: the cheap background subset
+    private var summaryServices: [(name: String, service: AnyObject)] = []   // one per name: CPU dies, SSD, battery
     private var client: AnyObject?   // must outlive the service references, or reads crash
 
     init() {
@@ -327,6 +329,37 @@ final class Sensors {
             services.append((name, s))
         }
         services.sort { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        var seen = Set<String>()
+        cpuServices = services.filter { $0.name.hasPrefix("PMU tdie") && seen.insert($0.name).inserted }.map(\.service)
+        var seen2 = Set<String>()
+        summaryServices = services.filter {
+            ($0.name.hasPrefix("PMU tdie") || $0.name.hasPrefix("NAND") || $0.name.contains("gas gauge")) && seen2.insert($0.name).inserted
+        }
+    }
+
+    /// CPU, SSD and battery temperatures from one sensor of each — what every page except Thermals shows.
+    func readSummary() -> Temperatures {
+        var cpu: [Double] = [], ssd: [Double] = [], bat: [Double] = []
+        for (name, s) in summaryServices {
+            guard let e = IOHIDServiceClientCopyEvent(s, kTemperatureEvent, 0, 0)?.takeRetainedValue() else { continue }
+            let v = IOHIDEventGetFloatValue(e, Int32(kTemperatureEvent << 16))
+            guard v > 0, v < 130 else { continue }
+            if name.hasPrefix("PMU tdie") { cpu.append(v) } else if name.hasPrefix("NAND") { ssd.append(v) } else { bat.append(v) }
+        }
+        func avg(_ a: [Double]) -> Double? { a.isEmpty ? nil : a.reduce(0, +) / Double(a.count) }
+        return Temperatures(cpu: cpu.max(), cpuAvg: avg(cpu), soc: nil, battery: avg(bat), ssd: avg(ssd))
+    }
+
+    /// Hottest CPU die temperature from one sensor per core. Each read is an IPC round-trip, so this is
+    /// what runs while the panel is closed; the full read (both PMUs, all sensors) is for the open panel.
+    func hottestCPU() -> Double? {
+        var hottest: Double?
+        for s in cpuServices {
+            guard let e = IOHIDServiceClientCopyEvent(s, kTemperatureEvent, 0, 0)?.takeRetainedValue() else { continue }
+            let v = IOHIDEventGetFloatValue(e, Int32(kTemperatureEvent << 16))
+            if v > 0, v < 130 { hottest = max(hottest ?? v, v) }
+        }
+        return hottest
     }
 
     /// `full: false` reads only the CPU die sensors (used for the menu bar and heat alerts while the panel is closed).
